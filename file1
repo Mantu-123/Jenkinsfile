@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+    
+    stages {
+        
+        stage('Git checkout') {
+            steps {
+                git url:'https://github.com/Mantu-123/iLearn.git', branch:'main'
+            }
+        }
+        
+        stage('Build'){
+            steps {
+                sh 'mvn clean package'
+                sh 'mv target/*.war target/myweb.war'
+            }
+        }
+        
+        stage('Deploy on tomcat'){
+            steps {
+                sshagent(['tomcat']) {
+                    
+                    sh """
+                    scp -o StrictHostkeyChecking=no target/myweb.war Ansible@172.17.0.2:/home/Dir/apache-tomcat-9.0.81/webapps
+                    
+                    ssh Ansible@172.17.0.2 "/home/Dir/apache-tomcat-9.0.81/bin/shutdown.sh"
+                    ssh Ansible@172.17.0.2 "/home/Dir/apache-tomcat-9.0.81/bin/startup.sh"
+                      
+                      """
+                }
+            }
+            
+        }
+        
+        
+        
+    }
+}
